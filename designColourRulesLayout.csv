@@ -6,7 +6,7 @@ highlight.colour;brightred;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;
-;;;;;;;8;9;10;;;;;;;;
+;;;;;;;;;;"=myRGB(H11;I11;J11)";;;;;;;
 rule.name;rule.rule;rule.types;rule.description;transparency;edgeOn;colour;R;G;B;RGB;sort number;;;;;;
 unique colours;:RCOLOUR NE 4;SBFR MEM FRMW MEM HANG EQUI SUBE BRAN;unique colours;0;FALSE;:RCOLOUR;200;4;23;;1;;;;;;
 Grating floors;PURP EQ 'GRAT';SBFR SUBS FRMW;Grating floors;0;FALSE;;231;41;3;;2;;;;;;

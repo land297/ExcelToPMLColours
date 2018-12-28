@@ -55,8 +55,7 @@ Sub WriteDesCol()
     stream.WriteLine "!tempArray = Array()"
     stream.WriteLine ""
     
-    i = 11
-    Do While True
+    For i = 11 To lastRow
         ruleName = ThisWorkbook.Worksheets(1).Cells(i, 1).Value
         transpareny = ThisWorkbook.Worksheets(1).Cells(i, 5).Value
         edgeOn = ThisWorkbook.Worksheets(1).Cells(i, 6).Value
@@ -67,14 +66,19 @@ Sub WriteDesCol()
             g = ThisWorkbook.Worksheets(1).Cells(i, 9).Value
             b = ThisWorkbook.Worksheets(1).Cells(i, 10).Value
             
-            rrgb = r & "," & g & "," & b
-            s = d(rrgb)
-            Values = Split(s, ";")
-            colour = Values(2)
+            If Len(r) > 0 And Len(g) > 0 And Len(b) > 0 Then
+                rrgb = r & "," & g & "," & b
+                s = d(rrgb)
+                Values = Split(s, ";")
+                colour = Values(1)
+            Else
+                GoTo SkipRow:
+            End If
+
         End If
         
         If ruleName = "" Then
-            Exit Do
+            GoTo SkipRow:
         End If
   
         stream.WriteLine "!gphAutoColourRul = |" & ruleName & "|"
@@ -82,10 +86,16 @@ Sub WriteDesCol()
         stream.WriteLine "!gphAutoColEdgeOn = " & edgeOn
         stream.WriteLine "!gphAutoColourCol = object COLOUR(|" & colour & "|)"
         stream.WriteLine "!gphAutoColour    = object GPHAUTOCOLOUR(!gphAutoColourRul, !gphAutoColourCol, !gphAutoColTnslVal, !gphAutoColEdgeOn)"
-        stream.WriteLine "!tempArray[3] = !gphAutoColour"
+        stream.WriteLine "!tempArray.Append(!gphAutoColour)"
         stream.WriteLine ""
-        i = i + 1
-    Loop
+        
+SkipRow:
+       
+    Next i
+    
+    stream.WriteLine "!!tmpGphColOpt.autoColourRules = !tempArray"
+    stream.WriteLine "!!tmpGphColOpt.autoColour = TRUE"
+    stream.WriteLine "!!tmpGphColOpt.dynamicAutoColour = TRUE"
     
     stream.Close
     
@@ -96,15 +106,14 @@ Sub WriteDesElementRules()
     Dim stream As TextStream
     Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-element-rules.pmldat", True)
     
-    i = 11
-    Do While True
+    For i = 11 To lastRow
         ruleName = ThisWorkbook.Worksheets(1).Cells(i, 1).Value
         ruleRule = ThisWorkbook.Worksheets(1).Cells(i, 2).Value
         ruleType = ThisWorkbook.Worksheets(1).Cells(i, 3).Value
         ruleDesc = ThisWorkbook.Worksheets(1).Cells(i, 4).Value
         
         If ruleName = "" Then
-            Exit Do
+            GoTo SkipRow:
         End If
         
   
@@ -115,8 +124,8 @@ Sub WriteDesElementRules()
         stream.WriteLine "!rule.description = |" & ruleDesc & "|"
         stream.WriteLine "!!tmpRuleArray.append(!rule)"
         stream.WriteLine ""
-        i = i + 1
-    Loop
+SkipRow:
+    Next i
     
     stream.Close
     
@@ -128,7 +137,7 @@ Sub RunAll()
     Call WriteDesElementRules
 End Sub
 
-'
+' <
 ' https://stackoverflow.com/questions/33179452/change-a-cells-background-color-dynamically-according-to-a-rgb-value-stored-in
 ' Tim Williams
 '
@@ -156,7 +165,7 @@ Sub ChangeIt(sht, c, clr As Long)
     ThisWorkbook.Sheets(sht).Range(c).Interior.Color = clr
 End Sub
 
-
+' />
 
 
 

@@ -1,0 +1,84 @@
+Sub WriteDesCol()
+    Dim fso As New FileSystemObject
+    Dim stream As TextStream
+    Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-col.pmldat", True)
+    
+    ceColour = ThisWorkbook.Worksheets(1).Cells(1, 2).Value
+    activeColour = ThisWorkbook.Worksheets(1).Cells(2, 2).Value
+    aidsColour = ThisWorkbook.Worksheets(1).Cells(3, 2).Value
+    visibleColour = ThisWorkbook.Worksheets(1).Cells(4, 2).Value
+    highlightColour = ThisWorkbook.Worksheets(1).Cells(5, 2).Value
+    
+    stream.writeline "!!tmpGphColOpt.ce.colour(|" & ceColour & "|)"
+    stream.writeline "!!tmpGphColOpt.active.colour(|" & activeColour & "|)"
+    stream.writeline "!!tmpGphColOpt.aids.colour(|" & aidsColour & "|)"
+    stream.writeline "!!tmpGphColOpt.visible.colour(|" & visibleColour & "|)"
+    stream.writeline "!!tmpGphColOpt.highlight.colour(|" & highlightColour & "|)"
+    stream.writeline ""
+    stream.writeline "!tempArray = Array()"
+    stream.writeline ""
+    
+    i = 11
+    Do While True
+        ruleName = ThisWorkbook.Worksheets(1).Cells(i, 1).Value
+        transpareny = ThisWorkbook.Worksheets(1).Cells(i, 5).Value
+        edgeOn = ThisWorkbook.Worksheets(1).Cells(i, 6).Value
+        colour = ThisWorkbook.Worksheets(1).Cells(i, 7).Value
+                
+        If ruleName = "" Then
+            Exit Do
+        End If
+        
+  
+        stream.writeline "!gphAutoColourRul = |" & ruleName & "|"
+        stream.writeline "!gphAutoColTnslVal = " & transpareny
+        stream.writeline "!gphAutoColEdgeOn = " & edgeOn
+        stream.writeline "!gphAutoColourCol = object COLOUR(|" & colour & "|)"
+        stream.writeline "!gphAutoColour    = object GPHAUTOCOLOUR(!gphAutoColourRul, !gphAutoColourCol, !gphAutoColTnslVal, !gphAutoColEdgeOn)"
+        stream.writeline "!tempArray[3] = !gphAutoColour"
+        stream.writeline ""
+        i = i + 1
+    Loop
+    
+    stream.Close
+    
+End Sub
+
+Sub WriteDesElementRules()
+    Dim fso As New FileSystemObject
+    Dim stream As TextStream
+    Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-element-rules.pmldat", True)
+    
+    i = 11
+    Do While True
+        ruleName = ThisWorkbook.Worksheets(1).Cells(i, 1).Value
+        ruleRule = ThisWorkbook.Worksheets(1).Cells(i, 2).Value
+        ruleType = ThisWorkbook.Worksheets(1).Cells(i, 3).Value
+        ruleDesc = ThisWorkbook.Worksheets(1).Cells(i, 4).Value
+        
+        If ruleName = "" Then
+            Exit Do
+        End If
+        
+  
+        stream.writeline "!rule             = object RULE()"
+        stream.writeline "!rule.name        = |" & ruleName & "|"
+        stream.writeline "!rule.rule        = |" & ruleRule & "|"
+        stream.writeline "!rule.types       = |" & ruleType & "|"
+        stream.writeline "!rule.description = |" & ruleDesc & "|"
+        stream.writeline "!!tmpRuleArray.append(!rule)"
+        stream.writeline ""
+        i = i + 1
+    Loop
+    
+    stream.Close
+    
+End Sub
+
+
+Sub RunAll()
+    Call WriteDesCol
+    Call WriteDesElementRules
+End Sub
+
+

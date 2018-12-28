@@ -3,20 +3,57 @@ Sub WriteDesCol()
     Dim stream As TextStream
     Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-col.pmldat", True)
     
+    Dim d As Dictionary
+    Set d = CreateObject("Scripting.Dictionary")
+    
     ceColour = ThisWorkbook.Worksheets(1).Cells(1, 2).Value
     activeColour = ThisWorkbook.Worksheets(1).Cells(2, 2).Value
     aidsColour = ThisWorkbook.Worksheets(1).Cells(3, 2).Value
     visibleColour = ThisWorkbook.Worksheets(1).Cells(4, 2).Value
     highlightColour = ThisWorkbook.Worksheets(1).Cells(5, 2).Value
     
-    stream.writeline "!!tmpGphColOpt.ce.colour(|" & ceColour & "|)"
-    stream.writeline "!!tmpGphColOpt.active.colour(|" & activeColour & "|)"
-    stream.writeline "!!tmpGphColOpt.aids.colour(|" & aidsColour & "|)"
-    stream.writeline "!!tmpGphColOpt.visible.colour(|" & visibleColour & "|)"
-    stream.writeline "!!tmpGphColOpt.highlight.colour(|" & highlightColour & "|)"
-    stream.writeline ""
-    stream.writeline "!tempArray = Array()"
-    stream.writeline ""
+    lastRow = ThisWorkbook.Worksheets(1).UsedRange.Rows.Count
+    
+    For i = 11 To lastRow
+        r = ThisWorkbook.Worksheets(1).Cells(i, 8).Value
+        g = ThisWorkbook.Worksheets(1).Cells(i, 9).Value
+        b = ThisWorkbook.Worksheets(1).Cells(i, 10).Value
+        
+        If Len(r) > 0 And Len(g) > 0 And Len(b) > 0 Then
+            rrgb = r & "," & g & "," & b
+            ' dictionary will make sure we do not store the same value several times
+            d(rrgb) = "RGB" & rrgb
+        End If
+    Next i
+    
+    ' global array to store which colours have been loaded
+    stream.WriteLine "!!excelLoadedColours = object array()"
+    colourStartIndex = 80
+    Dim v As Variant
+    
+    ' will save the first 100 default Aveva colours
+    colourIndex = 100
+    For Each v In d.Keys()
+        s = d(v)
+        ' check if s not blla
+        'Values = Split(s, ";")
+        stream.WriteLine "SET COLOUR " & colourIndex & " " & s
+        'SET COLOUR 120 RBG224,225,120
+        stream.WriteLine "!!excelLoadedColours.Append(|" & colourIndex & ";" & s & "|)"
+        
+        d(v) = s & ";" & colourIndex
+        colourIndex = colourIndex + 1
+    Next v
+    
+    
+    stream.WriteLine "!!tmpGphColOpt.ce.colour(|" & ceColour & "|)"
+    stream.WriteLine "!!tmpGphColOpt.active.colour(|" & activeColour & "|)"
+    stream.WriteLine "!!tmpGphColOpt.aids.colour(|" & aidsColour & "|)"
+    stream.WriteLine "!!tmpGphColOpt.visible.colour(|" & visibleColour & "|)"
+    stream.WriteLine "!!tmpGphColOpt.highlight.colour(|" & highlightColour & "|)"
+    stream.WriteLine ""
+    stream.WriteLine "!tempArray = Array()"
+    stream.WriteLine ""
     
     i = 11
     Do While True
@@ -25,18 +62,28 @@ Sub WriteDesCol()
         edgeOn = ThisWorkbook.Worksheets(1).Cells(i, 6).Value
         colour = ThisWorkbook.Worksheets(1).Cells(i, 7).Value
                 
+        If colour = "" Then
+            r = ThisWorkbook.Worksheets(1).Cells(i, 8).Value
+            g = ThisWorkbook.Worksheets(1).Cells(i, 9).Value
+            b = ThisWorkbook.Worksheets(1).Cells(i, 10).Value
+            
+            rrgb = r & "," & g & "," & b
+            s = d(rrgb)
+            Values = Split(s, ";")
+            colour = Values(2)
+        End If
+        
         If ruleName = "" Then
             Exit Do
         End If
-        
   
-        stream.writeline "!gphAutoColourRul = |" & ruleName & "|"
-        stream.writeline "!gphAutoColTnslVal = " & transpareny
-        stream.writeline "!gphAutoColEdgeOn = " & edgeOn
-        stream.writeline "!gphAutoColourCol = object COLOUR(|" & colour & "|)"
-        stream.writeline "!gphAutoColour    = object GPHAUTOCOLOUR(!gphAutoColourRul, !gphAutoColourCol, !gphAutoColTnslVal, !gphAutoColEdgeOn)"
-        stream.writeline "!tempArray[3] = !gphAutoColour"
-        stream.writeline ""
+        stream.WriteLine "!gphAutoColourRul = |" & ruleName & "|"
+        stream.WriteLine "!gphAutoColTnslVal = " & transpareny
+        stream.WriteLine "!gphAutoColEdgeOn = " & edgeOn
+        stream.WriteLine "!gphAutoColourCol = object COLOUR(|" & colour & "|)"
+        stream.WriteLine "!gphAutoColour    = object GPHAUTOCOLOUR(!gphAutoColourRul, !gphAutoColourCol, !gphAutoColTnslVal, !gphAutoColEdgeOn)"
+        stream.WriteLine "!tempArray[3] = !gphAutoColour"
+        stream.WriteLine ""
         i = i + 1
     Loop
     
@@ -61,13 +108,13 @@ Sub WriteDesElementRules()
         End If
         
   
-        stream.writeline "!rule             = object RULE()"
-        stream.writeline "!rule.name        = |" & ruleName & "|"
-        stream.writeline "!rule.rule        = |" & ruleRule & "|"
-        stream.writeline "!rule.types       = |" & ruleType & "|"
-        stream.writeline "!rule.description = |" & ruleDesc & "|"
-        stream.writeline "!!tmpRuleArray.append(!rule)"
-        stream.writeline ""
+        stream.WriteLine "!rule             = object RULE()"
+        stream.WriteLine "!rule.name        = |" & ruleName & "|"
+        stream.WriteLine "!rule.rule        = |" & ruleRule & "|"
+        stream.WriteLine "!rule.types       = |" & ruleType & "|"
+        stream.WriteLine "!rule.description = |" & ruleDesc & "|"
+        stream.WriteLine "!!tmpRuleArray.append(!rule)"
+        stream.WriteLine ""
         i = i + 1
     Loop
     
@@ -80,5 +127,38 @@ Sub RunAll()
     Call WriteDesCol
     Call WriteDesElementRules
 End Sub
+
+'
+' https://stackoverflow.com/questions/33179452/change-a-cells-background-color-dynamically-according-to-a-rgb-value-stored-in
+' Tim Williams
+'
+
+Function myRGB(r, g, b)
+
+    Dim clr As Long, src As Range, sht As String, f, v
+
+    If IsEmpty(r) Or IsEmpty(g) Or IsEmpty(b) Then
+        clr = vbWhite
+    Else
+        clr = RGB(r, g, b)
+    End If
+
+    Set src = Application.ThisCell
+    sht = src.Parent.Name
+
+    f = "Changeit(""" & sht & """,""" & _
+                  src.Address(False, False) & """," & clr & ")"
+    src.Parent.Evaluate f
+    myRGB = ""
+End Function
+
+Sub ChangeIt(sht, c, clr As Long)
+    ThisWorkbook.Sheets(sht).Range(c).Interior.Color = clr
+End Sub
+
+
+
+
+
 
 

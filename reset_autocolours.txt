@@ -1,0 +1,9 @@
+WORLD
+
+!!autocolourtty()
+
+var !drawlist collect all from drawlist
+
+do !x values !drawlist
+	REM $!x ADD $!x
+enddo

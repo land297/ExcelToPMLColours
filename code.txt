@@ -3,8 +3,8 @@ Sub WriteDesCol()
     Dim stream As TextStream
     Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-col.pmldat", True)
     
-    Dim d As Dictionary
-    Set d = CreateObject("Scripting.Dictionary")
+    Dim rgbDictionary As Dictionary
+    Set rgbDictionary = CreateObject("Scripting.Dictionary")
     
     ceColour = ThisWorkbook.Worksheets(1).Cells(1, 2).Value
     activeColour = ThisWorkbook.Worksheets(1).Cells(2, 2).Value
@@ -20,32 +20,30 @@ Sub WriteDesCol()
         b = ThisWorkbook.Worksheets(1).Cells(i, 10).Value
         
         If Len(r) > 0 And Len(g) > 0 And Len(b) > 0 Then
-            rrgb = r & "," & g & "," & b
+            rgbKey = r & "," & g & "," & b
             ' dictionary will make sure we do not store the same value several times
-            d(rrgb) = "RGB" & rrgb
+            ' https://excelmacromastery.com/vba-dictionary/
+            rgbDictionary(rgbKey) = "RGB" & rgbKey
         End If
     Next i
     
     ' global array to store which colours have been loaded
     stream.WriteLine "!!excelLoadedColours = object array()"
     colourStartIndex = 80
-    Dim v As Variant
     
-    ' will save the first 100 default Aveva colours
+    Dim Key As Variant
+    ' will not change the first 100 default Aveva colours
     colourIndex = 100
-    For Each v In d.Keys()
-        s = d(v)
-        ' check if s not blla
-        'Values = Split(s, ";")
-        stream.WriteLine "SET COLOUR " & colourIndex & " " & s
+    For Each Key In rgbDictionary.Keys()
+        rgbValue = rgbDictionary(Key)
         'SET COLOUR 120 RBG224,225,120
-        stream.WriteLine "!!excelLoadedColours.Append(|" & colourIndex & ";" & s & "|)"
-        
-        d(v) = s & ";" & colourIndex
+        stream.WriteLine "SET COLOUR " & colourIndex & " " & rgbValue
+        stream.WriteLine "!!excelLoadedColours.Append(|" & colourIndex & ";" & rgbValue & "|)"
+        rgbDictionary(Key) = rgbValue & ";" & colourIndex
         colourIndex = colourIndex + 1
-    Next v
-    
-    
+    Next Key
+     
+    stream.WriteLine ""
     stream.WriteLine "!!tmpGphColOpt.ce.colour(|" & ceColour & "|)"
     stream.WriteLine "!!tmpGphColOpt.active.colour(|" & activeColour & "|)"
     stream.WriteLine "!!tmpGphColOpt.aids.colour(|" & aidsColour & "|)"
@@ -67,14 +65,14 @@ Sub WriteDesCol()
             b = ThisWorkbook.Worksheets(1).Cells(i, 10).Value
             
             If Len(r) > 0 And Len(g) > 0 And Len(b) > 0 Then
-                rrgb = r & "," & g & "," & b
-                s = d(rrgb)
-                Values = Split(s, ";")
-                colour = Values(1)
+                rgbKey = r & "," & g & "," & b
+                Value = rgbDictionary(rgbKey)
+                Data = Split(Value, ";")
+                'Data(1) the number assigned to the rgb colour
+                colour = Data(1)
             Else
                 GoTo SkipRow:
             End If
-
         End If
         
         If ruleName = "" Then
@@ -105,6 +103,8 @@ Sub WriteDesElementRules()
     Dim fso As New FileSystemObject
     Dim stream As TextStream
     Set stream = fso.CreateTextFile(Application.ActiveWorkbook.Path & "\des-element-rules.pmldat", True)
+    
+    lastRow = ThisWorkbook.Worksheets(1).UsedRange.Rows.Count
     
     For i = 11 To lastRow
         ruleName = ThisWorkbook.Worksheets(1).Cells(i, 1).Value
